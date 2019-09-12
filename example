@@ -1,0 +1,116 @@
+<template>
+    <div>
+        <div class="sectionVacancy">
+            <transition name="fade">
+                <div class="sectionVacancy-loading" v-if="loading &!firstLoading">
+                    <i v-show="loading" class="fa fa-spinner fa-spin"></i>
+                </div>
+                <div v-else-if="firstLoading">
+                    <div class="panel">
+                        <last-vacant></last-vacant>
+                    </div>
+                </div>
+                <div v-else class="table-responsive sectionVacancy-groupResult">
+                    <p class="sectionVacancy-groupResult--not" v-show="!vacancy.vacants.data.length">Вакансии не найдены. Попробуйте изменить
+                        критерии поиска.</p>
+                    <table class="table sectionVacancy-table" v-show="vacancy.vacants.data.length">
+                        <thead>
+                        <tr>
+                            <th>Специалист</th>
+                            <th>Зарплата специалиста</th>
+                            <th>Дата публикации</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(opt, index) in vacancy.vacants.data" :key="index" :value="opt.value">
+                            <td><a :href="'/vacancy/'+opt.id">{{opt.vacant_title}}</a></td>
+                            <!--<td v-html="rtrim(opt.vacant_description)"></td>-->
+                            <td>
+                              <span class="price price-primary">{{opt.price_vacant|formatMoney}}
+                             <i aria-hidden="true" class="fa fa-rub"></i>
+                            </span>
+                            </td>
+                            <td class="sectionVacancy-date">{{ opt.created_at|formatDate }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </transition>
+        </div>
+        <div class="center sectionVacancy-pagination">
+            <pagination :data="this.laravelData" @pagination-change-page="getResults" :show-disabled="false" :limit="5">
+            </pagination>
+        </div>
+    </div>
+</template>
+<script>
+    import {bus} from '../js';
+
+    export default {
+        props: {
+            domain: {
+                type: String,
+                required: true
+            }
+        },
+        created() {
+            this.firstLoading = true;
+            this.loading = true;
+            this.selectedItem = null;
+            bus.$on('getVacancy', data => {
+                this.vacancy = data;
+                this.loading = false;
+                this.laravelData = this.vacancy.vacants;
+                this.selectedPrice = data.selectedPrice;
+                this.isRemote = this.vacancy.isRemote;
+                if (this.vacancy.vacants.data[0]) {
+                    this.selectedItem = this.vacancy.vacants.data[0].categories_id;
+                }
+                this.firstLoading = false;
+            })
+        },
+        methods: {
+            rtrim: function (value) {
+                if (!value) {
+                    return '';
+                }
+                value = value.toString();
+                return value.substring(0, 60) + '...';
+            },
+            getResults(page = 1) {
+                this.loading = true;
+                let url = this.domain + 'url/someUrl/';
+                axios.get(url, {
+                    params: {
+                        id: this.selectedItem,
+                        page: page,
+                        is_remote: this.isRemote,
+                        selected_price: this.selectedPrice
+                    }
+                })
+                    .then(response => {
+                        this.loading = false;
+                        this.vacancy = response.data;
+                        this.laravelData = response.data.vacants;
+                    })
+                    .catch((e) => {
+                        console.warn('pagination error', e.toString());
+                    })
+            }
+        },
+        data: () => {
+            return {
+                vacancy: [],
+                isRemote: null,
+                selectedItem: null,
+                selectedPrice: null,
+                loading: false,
+                error: false,
+                laravelData: {},
+            }
+        },
+        mounted() {
+            this.getResults();
+        }
+    }
+</script>
