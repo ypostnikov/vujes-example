@@ -24,11 +24,10 @@
                         <tbody>
                         <tr v-for="(opt, index) in vacancy.vacants.data" :key="index" :value="opt.value">
                             <td><a :href="'/vacancy/'+opt.id">{{opt.vacant_title}}</a></td>
-                            <!--<td v-html="rtrim(opt.vacant_description)"></td>-->
                             <td>
                               <span class="price price-primary">{{opt.price_vacant|formatMoney}}
-                             <i aria-hidden="true" class="fa fa-rub"></i>
-                            </span>
+                                <i aria-hidden="true" class="fa fa-rub"></i>
+                              </span>
                             </td>
                             <td class="sectionVacancy-date">{{ opt.created_at|formatDate }}</td>
                         </tr>
@@ -37,9 +36,8 @@
                 </div>
             </transition>
         </div>
-        <div class="center sectionVacancy-pagination">
-            <pagination :data="this.laravelData" @pagination-change-page="getResults" :show-disabled="false" :limit="5">
-            </pagination>
+        <div class="sectionVacancy-pagination">
+            <pagination :data="this.laravelData" @pagination-change-page="getResults" :show-disabled="false" :limit="5"></pagination>
         </div>
     </div>
 </template>
@@ -80,14 +78,15 @@
             getResults(page = 1) {
                 this.loading = true;
                 let url = this.domain + 'url/someUrl/';
-                axios.get(url, {
-                    params: {
-                        id: this.selectedItem,
-                        page: page,
-                        is_remote: this.isRemote,
-                        selected_price: this.selectedPrice
-                    }
-                })
+                let payload = {
+                        params: {
+                            id: this.selectedItem,
+                            page: page,
+                            is_remote: this.isRemote,
+                            selected_price: this.selectedPrice
+                            }
+                        };
+                axios.get(url, payload)
                     .then(response => {
                         this.loading = false;
                         this.vacancy = response.data;
